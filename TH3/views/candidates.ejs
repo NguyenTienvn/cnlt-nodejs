@@ -1,0 +1,13 @@
+<%- include('layouts/header') %>
+<%- include('layouts/navbar') %>
+
+<h1><%= election.name %></h1>
+
+<% election.candidates.forEach(c => { %>
+  <div class="card">
+    <h3><%= c.name %></h3>
+    <a class="btn vote-btn" href="/vote/<%= election.id %>/<%= c.id %>">Bỏ phiếu</a>
+  </div>
+<% }) %>
+
+<%- include('layouts/footer') %>

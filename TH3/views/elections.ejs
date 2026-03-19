@@ -1,0 +1,13 @@
+<%- include('layouts/header') %>
+<%- include('layouts/navbar') %>
+
+<h1>Danh sách cuộc bầu cử</h1>
+
+<% elections.forEach(e => { %>
+  <div class="card">
+    <h3><%= e.name %></h3>
+    <a class="btn" href="/election/<%= e.id %>">Tham gia</a>
+  </div>
+<% }) %>
+
+<%- include('layouts/footer') %>

@@ -1,0 +1,21 @@
+<%- include('layouts/header') %>
+<%- include('layouts/navbar') %>
+
+<h1>Kết quả: <%= election.name %></h1>
+
+<%
+let maxVote = Math.max(...election.candidates.map(c => c.votes));
+%>
+
+<% election.candidates.forEach(c => { %>
+  <div class="card">
+    <h3 class="<%= c.votes === maxVote ? 'winner' : '' %>">
+      <%= c.name %>
+    </h3>
+    <p>Số phiếu: <%= c.votes %></p>
+  </div>
+<% }) %>
+
+<a class="btn" href="/elections">Quay lại</a>
+
+<%- include('layouts/footer') %>

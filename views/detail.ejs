@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= post.title %> - Chi tiết</title>
+  <link rel="stylesheet" href="/css/detail.css">
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>Chi tiết bài viết</h1>
+      <a href="/" class="btn btn-secondary">Về trang chủ</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <main>
+      <% if (message === 'updated') { %>
+        <div class="alert alert-success">
+          ✓ Đã cập nhật bài viết thành công!
+        </div>
+      <% } %>
+      
+      <article class="post-detail">
+        <h2><%= post.title %></h2>
+        <div class="post-meta">
+          <span class="author"><%= post.author %></span>
+          <span class="date"><%= new Date(post.createdAt).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+          <span class="time"><%= new Date(post.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>
+        </div>
+        <% if (post.image) { %>
+          <div class="post-image-detail">
+            <img src="<%= post.image %>" alt="<%= post.title %>">
+          </div>
+        <% } %>
+        <div class="post-content"><%= post.content %></div>
+        <div class="post-actions">
+          <a href="/post/<%= post._id %>/edit" class="btn btn-edit">Chỉnh sửa</a>
+          <button type="button" class="btn btn-delete" onclick="showDeleteModal('<%= post._id %>')">Xóa bài viết</button>
+        </div>
+      </article>
+    </main>
+  </div>
+
+  <!-- Modal xác nhận xóa -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <h3>Xác nhận xóa</h3>
+      <p>Bạn có chắc chắn muốn xóa bài viết này không?</p>
+      <div class="modal-actions">
+        <button onclick="confirmDelete()" class="btn btn-delete">Xóa</button>
+        <button onclick="closeModal()" class="btn btn-secondary">Hủy</button>
+      </div>
+    </div>
+  </div>
+
+  <form id="deleteForm" method="POST" style="display: none;"></form>
+
+  <script>
+    let deletePostId = null;
+
+    function showDeleteModal(postId) {
+      deletePostId = postId;
+      document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('deleteModal').style.display = 'none';
+      deletePostId = null;
+    }
+
+    function confirmDelete() {
+      if (deletePostId) {
+        const form = document.getElementById('deleteForm');
+        form.action = '/post/' + deletePostId + '/delete';
+        form.submit();
+      }
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('deleteModal');
+      if (event.target === modal) {
+        closeModal();
+      }
+    }
+  </script>
+</body>
+</html>

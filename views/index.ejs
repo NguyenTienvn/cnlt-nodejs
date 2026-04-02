@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog - Danh sách bài viết</title>
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>My Blog</h1>
+      <a href="/post/create" class="btn btn-primary">Tạo bài viết mới</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <main>
+      <% if (message === 'deleted') { %>
+        <div class="alert alert-success">
+          ✓ Đã xóa bài viết thành công!
+        </div>
+      <% } %>
+      
+      <% if (message === 'created') { %>
+        <div class="alert alert-success">
+          ✓ Đã tạo bài viết mới thành công!
+        </div>
+      <% } %>
+      
+      <% if (posts.length === 0) { %>
+        <div class="no-posts">
+          Chưa có bài viết nào. Hãy tạo bài viết đầu tiên của bạn!
+        </div>
+      <% } else { %>
+        <div class="posts-grid">
+          <% posts.forEach(function(post) { %>
+            <article class="post-card">
+              <% if (post.image) { %>
+                <div class="post-image">
+                  <img src="<%= post.image %>" alt="<%= post.title %>">
+                </div>
+              <% } %>
+              <h2><%= post.title %></h2>
+              <div class="post-meta">
+                <span class="author"><%= post.author %></span>
+                <span class="date"><%= new Date(post.createdAt).toLocaleDateString('vi-VN') %></span>
+              </div>
+              <p class="post-excerpt"><%= post.content.substring(0, 150) %><%= post.content.length > 150 ? '...' : '' %></p>
+              <div class="post-actions">
+                <a href="/post/<%= post._id %>" class="btn btn-view">Xem chi tiết</a>
+                <a href="/post/<%= post._id %>/edit" class="btn btn-edit">Sửa</a>
+                <button type="button" class="btn btn-delete" onclick="showDeleteModal('<%= post._id %>')">Xóa</button>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+      <% } %>
+    </main>
+  </div>
+
+  <!-- Modal xác nhận xóa -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <h3>Xác nhận xóa</h3>
+      <p>Bạn có chắc chắn muốn xóa bài viết này không?</p>
+      <div class="modal-actions">
+        <button onclick="confirmDelete()" class="btn btn-delete">Xóa</button>
+        <button onclick="closeModal()" class="btn btn-secondary">Hủy</button>
+      </div>
+    </div>
+  </div>
+
+  <form id="deleteForm" method="POST" style="display: none;"></form>
+
+  <script>
+    let deletePostId = null;
+
+    function showDeleteModal(postId) {
+      deletePostId = postId;
+      document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('deleteModal').style.display = 'none';
+      deletePostId = null;
+    }
+
+    function confirmDelete() {
+      if (deletePostId) {
+        const form = document.getElementById('deleteForm');
+        form.action = '/post/' + deletePostId + '/delete';
+        form.submit();
+      }
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('deleteModal');
+      if (event.target === modal) {
+        closeModal();
+      }
+    }
+  </script>
+</body>
+</html>

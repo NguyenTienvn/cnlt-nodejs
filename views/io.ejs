@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Blocking vs Non-blocking</title>
+  <link rel="stylesheet" href="/css/io.css"/>
+</head>
+<body>
+  <div class="container">
+    <a href="/dashboard" class="back">← Về trang chủ</a>
+    <h1>Blocking vs Non-blocking I/O</h1>
+
+    <div class="note">
+      Mở <strong>Console</strong> của server (terminal) để quan sát thứ tự thực thi khi gọi từng API.
+    </div>
+
+    <div class="section sync-section">
+      <h2>Blocking — readFileSync</h2>
+      <p>Đọc file đồng bộ. Server bị chặn cho đến khi đọc xong mới xử lý tiếp.</p>
+      <button class="btn-sync" onclick="callSync()">Gọi GET /sync</button>
+      <div id="sync-result" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="section async-section">
+      <h2>Non-blocking — readFile</h2>
+      <p>Đọc file bất đồng bộ. Server không bị chặn, tiếp tục xử lý các request khác trong khi chờ.</p>
+      <button class="btn-async" onclick="callAsync()">Gọi GET /async</button>
+      <div id="async-result" class="result" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    async function callSync() {
+      const el = document.getElementById('sync-result');
+      el.style.display = 'block';
+      el.innerHTML = '<em>Đang gọi...</em>';
+      const res = await fetch('/sync');
+      const data = await res.json();
+      el.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+    }
+
+    async function callAsync() {
+      const el = document.getElementById('async-result');
+      el.style.display = 'block';
+      el.innerHTML = '<em>Đang gọi...</em>';
+      const res = await fetch('/async');
+      const data = await res.json();
+      el.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+    }
+  </script>
+</body>
+</html>

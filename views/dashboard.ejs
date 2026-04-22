@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Quản lý Sinh viên</title>
+  <link rel="stylesheet" href="/css/dashboard.css"/>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">Quản lý Sinh viên</div>
+  <div class="header-right">
+    <% if (!user) { %>
+      <button class="btn-login" onclick="window.location.href='/login'">Đăng nhập</button>
+    <% } else { %>
+      <div class="user-menu" id="userMenu">
+        <button class="user-btn" onclick="toggleDropdown()">
+          <%= user.username %> ▾
+        </button>
+        <div class="dropdown-menu" id="dropdownMenu">
+          <div class="dropdown-header">
+            <div class="d-name"><%= user.username %></div>
+            <div class="d-role"><%= user.role %></div>
+          </div>
+          <a class="dropdown-item" href="/profile">Hồ sơ cá nhân</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item logout" href="/logout">Đăng xuất</a>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">Danh sách Sinh viên</div>
+
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-num" id="totalCount">0</div>
+      <div class="stat-label">Tổng sinh viên</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="totalDept">0</div>
+      <div class="stat-label">Số khoa</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Danh sách</h2>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Tìm theo tên hoặc MSV..." oninput="filterStudents()"/>
+        <button class="btn-add-student" onclick="openAddModal()">+ Thêm sinh viên</button>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>MSV</th>
+          <th>Họ tên</th>
+          <th>Lớp</th>
+          <th>Khoa</th>
+          <th>Hành động</th>
+        </tr>
+      </thead>
+      <tbody id="studentBody">
+        <tr><td colspan="5"><div class="empty-state">Đang tải...</div></td></tr>
+      </tbody>
+    </table>
+
+    <div class="pagination" id="pagination"></div>
+  </div>
+</main>
+
+<!-- Modal: Thêm -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Thêm sinh viên</h3>
+      <button class="modal-close" onclick="closeModal('addModal')">x</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-alert" id="addAlert"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>MSV *</label>
+          <input type="text" id="addMsv" placeholder="4651050001"/>
+        </div>
+        <div class="form-group">
+          <label>Họ tên *</label>
+          <input type="text" id="addName" placeholder="Nguyễn Văn A"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Lớp *</label>
+          <input type="text" id="addClass" placeholder="CNTT01"/>
+        </div>
+        <div class="form-group">
+          <label>Khoa *</label>
+          <input type="text" id="addDept" placeholder="Công nghệ thông tin"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('addModal')">Hủy</button>
+      <button class="btn-submit green" onclick="submitAdd()">Thêm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Chi tiết -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Chi tiết sinh viên</h3>
+      <button class="modal-close" onclick="closeModal('detailModal')">x</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('detailModal')">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Cập nhật -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Cập nhật sinh viên</h3>
+      <button class="modal-close" onclick="closeModal('editModal')">x</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-alert" id="editAlert"></div>
+      <input type="hidden" id="editId"/>
+      <div class="form-row">
+        <div class="form-group">
+          <label>MSV *</label>
+          <input type="text" id="editMsv"/>
+        </div>
+        <div class="form-group">
+          <label>Họ tên *</label>
+          <input type="text" id="editName"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Lớp *</label>
+          <input type="text" id="editClass"/>
+        </div>
+        <div class="form-group">
+          <label>Khoa *</label>
+          <input type="text" id="editDept"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('editModal')">Hủy</button>
+      <button class="btn-submit" onclick="submitEdit()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let allStudents = [];
+  let currentPage = 1;
+  const LIMIT = 3;
+
+  function toggleDropdown() {
+    document.getElementById('dropdownMenu')?.classList.toggle('open');
+  }
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('userMenu');
+    if (menu && !menu.contains(e.target))
+      document.getElementById('dropdownMenu')?.classList.remove('open');
+  });
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', (e) => { if (e.target === o) o.classList.remove('open'); });
+  });
+
+  async function loadStudents(page = 1) {
+    currentPage = page;
+    const res = await fetch(`/api/students?page=${page}&limit=${LIMIT}`);
+    const json = await res.json();
+    allStudents = json.data;
+    renderTable(allStudents);
+    renderPagination(json.page, json.totalPages, json.total);
+    document.getElementById('totalCount').textContent = json.total;
+    const depts = new Set(json.data.map(s => s.department));
+    document.getElementById('totalDept').textContent = depts.size;
+  }
+
+  function renderTable(students) {
+    const tbody = document.getElementById('studentBody');
+    if (!students.length) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">Không có dữ liệu</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = students.map(s => `
+      <tr>
+        <td>${s.msv}</td>
+        <td>${s.name}</td>
+        <td>${s.class}</td>
+        <td>${s.department}</td>
+        <td class="td-actions">
+          <button class="btn-detail" onclick="openDetail(${s.id})">Chi tiết</button>
+          <button class="btn-edit" onclick="openEdit(${s.id})">Cập nhật</button>
+          <button class="btn-delete" onclick="deleteStudent(${s.id})">Xóa</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function renderPagination(page, totalPages, total) {
+    const el = document.getElementById('pagination');
+    if (totalPages <= 1) { el.innerHTML = ''; return; }
+    let html = `<span class="page-info">Trang ${page}/${totalPages} (${total} sinh viên)</span>`;
+    html += `<button class="page-btn" onclick="loadStudents(${page - 1})" ${page <= 1 ? 'disabled' : ''}>&#8249; Trước</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="loadStudents(${i})">${i}</button>`;
+    }
+    html += `<button class="page-btn" onclick="loadStudents(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>Sau &#8250;</button>`;
+    el.innerHTML = html;
+  }
+
+  function filterStudents() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    if (!q) { loadStudents(1); return; }
+    renderTable(allStudents.filter(s =>
+      s.name.toLowerCase().includes(q) || s.msv.toLowerCase().includes(q)
+    ));
+    document.getElementById('pagination').innerHTML = '';
+  }
+
+  function openDetail(id) {
+    const s = allStudents.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('detailBody').innerHTML = `
+      <div class="detail-row"><span class="detail-label">MSV</span><span class="detail-value">${s.msv}</span></div>
+      <div class="detail-row"><span class="detail-label">Họ tên</span><span class="detail-value">${s.name}</span></div>
+      <div class="detail-row"><span class="detail-label">Lớp</span><span class="detail-value">${s.class}</span></div>
+      <div class="detail-row"><span class="detail-label">Khoa</span><span class="detail-value">${s.department}</span></div>
+    `;
+    openModal('detailModal');
+  }
+
+  function openAddModal() {
+    ['addMsv','addName','addClass','addDept'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('addAlert').className = 'modal-alert';
+    openModal('addModal');
+  }
+
+  async function submitAdd() {
+    const body = {
+      msv: document.getElementById('addMsv').value.trim(),
+      name: document.getElementById('addName').value.trim(),
+      class: document.getElementById('addClass').value.trim(),
+      department: document.getElementById('addDept').value.trim()
+    };
+    const res = await fetch('/api/students', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      closeModal('addModal');
+      showToast('Thêm sinh viên thành công');
+      loadStudents(currentPage);
+    } else {
+      const el = document.getElementById('addAlert');
+      el.textContent = data.error;
+      el.className = 'modal-alert error';
+    }
+  }
+
+  function openEdit(id) {
+    const s = allStudents.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('editId').value = s.id;
+    document.getElementById('editMsv').value = s.msv;
+    document.getElementById('editName').value = s.name;
+    document.getElementById('editClass').value = s.class;
+    document.getElementById('editDept').value = s.department;
+    document.getElementById('editAlert').className = 'modal-alert';
+    openModal('editModal');
+  }
+
+  async function submitEdit() {
+    const id = document.getElementById('editId').value;
+    const body = {
+      msv: document.getElementById('editMsv').value.trim(),
+      name: document.getElementById('editName').value.trim(),
+      class: document.getElementById('editClass').value.trim(),
+      department: document.getElementById('editDept').value.trim()
+    };
+    const res = await fetch('/api/students/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      closeModal('editModal');
+      showToast('Cập nhật thành công');
+      loadStudents(currentPage);
+    } else {
+      const el = document.getElementById('editAlert');
+      el.textContent = data.error;
+      el.className = 'modal-alert error';
+    }
+  }
+
+  async function deleteStudent(id) {
+    const s = allStudents.find(x => x.id === id);
+    if (!confirm('Xác nhận xóa sinh viên "' + s?.name + '"?')) return;
+    const res = await fetch('/api/students/' + id, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('Đã xóa sinh viên');
+      loadStudents(currentPage);
+    } else {
+      showToast('Xóa thất bại', 'error');
+    }
+  }
+
+  loadStudents(1);
+</script>
+</body>
+</html>

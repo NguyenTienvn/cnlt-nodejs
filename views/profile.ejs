@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Hồ sơ</title>
+  <link rel="stylesheet" href="/css/profile.css"/>
+</head>
+<body>
+  <div class="card">
+    <h1><%= user.username %></h1>
+    <span class="role"><%= user.role %></span>
+    <div class="info-box">
+      <p>Tên đăng nhập: <span><%= user.username %></span></p>
+      <p>Vai trò: <span><%= user.role %></span></p>
+      <p>Trạng thái: <span>Đang đăng nhập</span></p>
+    </div>
+    <a href="/logout" class="btn-logout">Đăng xuất</a>
+    <a href="/dashboard" class="back">← Về trang chủ</a>
+  </div>
+</body>
+</html>

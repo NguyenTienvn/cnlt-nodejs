@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Đăng nhập</title>
+  <link rel="stylesheet" href="/css/login.css"/>
+</head>
+<body>
+  <div class="card">
+    <h1>Đăng nhập</h1>
+    <p class="subtitle">Quản lý Sinh viên</p>
+    <div class="hint">Tài khoản: <strong>admin</strong> / <strong>123456</strong></div>
+    <label>Tên đăng nhập</label>
+    <input type="text" id="username" placeholder="admin"/>
+    <label>Mật khẩu</label>
+    <input type="password" id="password" placeholder="123456"/>
+    <button onclick="doLogin()">Đăng nhập</button>
+    <div id="msg"></div>
+    <a href="/dashboard" class="back">← Về trang chủ</a>
+  </div>
+
+  <script>
+    async function doLogin() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const msg = document.getElementById('msg');
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msg.className = 'msg success';
+        msg.textContent = data.message;
+        setTimeout(() => window.location.href = '/dashboard', 800);
+      } else {
+        msg.className = 'msg error';
+        msg.textContent = data.error;
+      }
+    }
+  </script>
+</body>
+</html>

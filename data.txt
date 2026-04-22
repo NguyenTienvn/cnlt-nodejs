@@ -1,0 +1,2 @@
+Day la noi dung file data.txt dung de demo Blocking vs Non-blocking trong NodeJS.
+Server doc file nay qua hai cach: readFileSync (blocking) va readFile (non-blocking).

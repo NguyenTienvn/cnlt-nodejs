@@ -10,6 +10,10 @@
 
 <header>
   <div class="header-logo">Quản lý Sinh viên</div>
+  <nav class="header-nav">
+    <a href="/dashboard" class="nav-link active">Dashboard</a>
+    <a href="/io" class="nav-link">Blocking / Non-blocking</a>
+  </nav>
   <div class="header-right">
     <% if (!user) { %>
       <button class="btn-login" onclick="window.location.href='/login'">Đăng nhập</button>
@@ -95,9 +99,15 @@
       </div>
       <div class="form-row">
         <div class="form-group">
+          <label>Email *</label>
+          <input type="email" id="addEmail" placeholder="example@gmail.com"/>
+        </div>
+        <div class="form-group">
           <label>Lớp *</label>
           <input type="text" id="addClass" placeholder="CNTT01"/>
         </div>
+      </div>
+      <div class="form-row">
         <div class="form-group">
           <label>Khoa *</label>
           <input type="text" id="addDept" placeholder="Công nghệ thông tin"/>
@@ -147,9 +157,15 @@
       </div>
       <div class="form-row">
         <div class="form-group">
+          <label>Email *</label>
+          <input type="email" id="editEmail"/>
+        </div>
+        <div class="form-group">
           <label>Lớp *</label>
           <input type="text" id="editClass"/>
         </div>
+      </div>
+      <div class="form-row">
         <div class="form-group">
           <label>Khoa *</label>
           <input type="text" id="editDept"/>
@@ -195,7 +211,7 @@
 
   async function loadStudents(page = 1) {
     currentPage = page;
-    const res = await fetch(`/api/students?page=${page}&limit=${LIMIT}`);
+    const res = await fetch(`/students?page=${page}&limit=${LIMIT}`);
     const json = await res.json();
     allStudents = json.data;
     renderTable(allStudents);
@@ -238,13 +254,14 @@
     el.innerHTML = html;
   }
 
-  function filterStudents() {
-    const q = document.getElementById('searchInput').value.toLowerCase();
+  async function filterStudents() {
+    const q = document.getElementById('searchInput').value.trim();
     if (!q) { loadStudents(1); return; }
-    renderTable(allStudents.filter(s =>
-      s.name.toLowerCase().includes(q) || s.msv.toLowerCase().includes(q)
-    ));
+    const res = await fetch('/students/search?name=' + encodeURIComponent(q));
+    const data = await res.json();
+    renderTable(data);
     document.getElementById('pagination').innerHTML = '';
+    document.getElementById('totalCount').textContent = data.length;
   }
 
   function openDetail(id) {
@@ -253,6 +270,7 @@
     document.getElementById('detailBody').innerHTML = `
       <div class="detail-row"><span class="detail-label">MSV</span><span class="detail-value">${s.msv}</span></div>
       <div class="detail-row"><span class="detail-label">Họ tên</span><span class="detail-value">${s.name}</span></div>
+      <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${s.email}</span></div>
       <div class="detail-row"><span class="detail-label">Lớp</span><span class="detail-value">${s.class}</span></div>
       <div class="detail-row"><span class="detail-label">Khoa</span><span class="detail-value">${s.department}</span></div>
     `;
@@ -260,7 +278,7 @@
   }
 
   function openAddModal() {
-    ['addMsv','addName','addClass','addDept'].forEach(id => document.getElementById(id).value = '');
+    ['addMsv','addName','addEmail','addClass','addDept'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('addAlert').className = 'modal-alert';
     openModal('addModal');
   }
@@ -269,10 +287,11 @@
     const body = {
       msv: document.getElementById('addMsv').value.trim(),
       name: document.getElementById('addName').value.trim(),
+      email: document.getElementById('addEmail').value.trim(),
       class: document.getElementById('addClass').value.trim(),
       department: document.getElementById('addDept').value.trim()
     };
-    const res = await fetch('/api/students', {
+    const res = await fetch('/students', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -295,6 +314,7 @@
     document.getElementById('editId').value = s.id;
     document.getElementById('editMsv').value = s.msv;
     document.getElementById('editName').value = s.name;
+    document.getElementById('editEmail').value = s.email;
     document.getElementById('editClass').value = s.class;
     document.getElementById('editDept').value = s.department;
     document.getElementById('editAlert').className = 'modal-alert';
@@ -306,10 +326,11 @@
     const body = {
       msv: document.getElementById('editMsv').value.trim(),
       name: document.getElementById('editName').value.trim(),
+      email: document.getElementById('editEmail').value.trim(),
       class: document.getElementById('editClass').value.trim(),
       department: document.getElementById('editDept').value.trim()
     };
-    const res = await fetch('/api/students/' + id, {
+    const res = await fetch('/students/' + id, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -329,7 +350,7 @@
   async function deleteStudent(id) {
     const s = allStudents.find(x => x.id === id);
     if (!confirm('Xác nhận xóa sinh viên "' + s?.name + '"?')) return;
-    const res = await fetch('/api/students/' + id, { method: 'DELETE' });
+    const res = await fetch('/students/' + id, { method: 'DELETE' });
     if (res.ok) {
       showToast('Đã xóa sinh viên');
       loadStudents(currentPage);

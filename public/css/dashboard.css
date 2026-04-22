@@ -15,6 +15,18 @@ header {
 .header-logo { font-size: 18px; font-weight: bold; }
 .header-right { display: flex; align-items: center; gap: 10px; }
 
+/* Nav */
+.header-nav { display: flex; align-items: center; gap: 4px; }
+.nav-link {
+  color: rgba(255,255,255,0.75);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+.nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.15); color: white; }
+
 .btn-login {
   background: white;
   color: #2c3e50;
